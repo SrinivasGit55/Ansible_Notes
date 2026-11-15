@@ -8,9 +8,3 @@ A growing collection of notes for learning and working with Ansible.
 
 ## Suggested structure
 
-```text
-.
-├── README.md
-└── docs/
-    └── introduction-to-ansible.md
-```
