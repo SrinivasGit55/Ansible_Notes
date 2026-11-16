@@ -4,7 +4,4 @@ A growing collection of notes for learning and working with Ansible.
 
 ## Notes
 
-- [Introduction to Ansible](docs/introduction-to-ansible.md) — Ansible concepts, architecture, inventories, modules, playbooks, roles, commands, and interview questions.
-
-## Suggested structure
-
+- [Ansible Day 1 – Introduction, Architecture and Practical Setup](Introduction-to-Ansible.md) — Ansible fundamentals, architecture, SSH, AWS EC2 lab setup, installation, inventory, ad hoc commands, troubleshooting, and interview questions.

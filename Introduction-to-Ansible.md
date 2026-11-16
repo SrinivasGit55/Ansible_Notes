@@ -1,732 +1,1229 @@
-# Ansible – Introduction & Architecture Components
+# Ansible Day 1 – Introduction, Architecture and Practical Setup
 
 ## 1. Introduction to Ansible
 
-Ansible is an open-source automation tool used for configuration management, application deployment, infrastructure automation, and orchestration.
+Ansible is an open-source automation and configuration management tool used to manage servers, configure systems, deploy applications and automate repetitive IT operations.
 
-It helps automate repetitive administrative tasks across multiple servers without manually connecting to each machine.
+In DevOps environments, managing multiple servers manually can become difficult. For example, consider an environment containing:
 
-### Why do we use Ansible?
+- 5 development servers
+- 5 testing servers
+- 10 production servers
 
-Imagine an environment with 20 Linux servers. We need to:
-- Install packages.
-- Create users.
-- Configure services.
-- Deploy applications.
-- Manage permissions.
+If we need to install Git, Maven, Apache or other packages on every server, performing the same operations manually takes time and increases the possibility of human errors.
 
-Performing these tasks manually on every server takes time and can cause configuration inconsistencies.
+Ansible helps automate these activities from a central machine.
 
-Ansible allows us to define these operations once and execute them across multiple servers.
+### 1.1 What is Configuration Management?
 
-### Common Use Cases
+Configuration management is the process of maintaining and managing the desired configuration of systems.
 
-- Configuration Management
-- Application Deployment
-- Infrastructure Provisioning
-- Cloud Automation
-- Network Automation
-- Security and Compliance
-- Disaster Recovery
-- CI/CD Automation
+It includes:
+
+- Installing and updating software packages.
+- Managing users and groups.
+- Configuring files and directories.
+- Managing services.
+- Maintaining system settings.
+- Applying consistent configurations across multiple servers.
+
+**Example:**
+
+Suppose an organization has ten Linux servers. All ten servers need Git and Apache installed.
+
+Without configuration management, an administrator must connect to every server and execute the installation commands individually.
+
+With Ansible, the administrator can execute a single command against all ten servers.
+
+```bash
+ansible all -m ansible.builtin.package -a "name=git state=present"
+```
+
+This approach reduces repetitive manual work and helps maintain consistent configurations.
+
+### 1.2 History of Ansible
+
+Ansible was created by Michael DeHaan and initially released in 2012.
+
+Red Hat acquired Ansible, Inc. in 2015.
+
+Ansible is now part of Red Hat's automation ecosystem.
+
+### 1.3 Important Features of Ansible
+
+**Agentless Architecture**
+
+Ansible normally does not require a separate agent installation on managed Linux servers. It uses SSH to communicate with them.
+
+**Simple Configuration**
+
+Ansible uses YAML for writing playbooks. YAML is designed to represent structured data in a human-readable format.
+
+**Python-Based**
+
+Ansible is implemented primarily in Python. Python is important for the control node and for executing most standard modules on managed Linux nodes.
+
+**Automation**
+
+Ansible can automate repetitive operations such as package installation, service management, file creation and application deployment.
+
+**Idempotency**
+
+Many Ansible modules are designed to maintain a desired state.
+
+For example, if a package is already installed, running a task that ensures the package is present normally does not reinstall it unnecessarily.
+
+**Multi-Platform Management**
+
+Ansible supports managing different Linux distributions and can also manage Windows systems through supported connection methods.
+
+### 1.4 What Problems Does Ansible Solve?
+
+| Without Ansible | With Ansible |
+|---|---|
+| Manual server connections | Centralized automation |
+| Repeated commands | Reusable tasks |
+| More human errors | Consistent configuration |
+| Difficult multi-server management | Group-based management |
+| Manual application configuration | Automated configuration |
 
 ---
 
-## 2. Key Features of Ansible
+## 2. Ansible Architecture and Components
 
-### 2.1 Agentless Architecture
+Ansible follows a control-node and managed-node architecture.
 
-Ansible does not normally require an Ansible agent to be installed on managed nodes.
+The control node communicates with managed nodes and executes automation tasks.
 
-- Linux managed nodes commonly use SSH.
-- Windows managed nodes commonly use WinRM or supported PowerShell remoting.
-- The control node initiates communication with managed nodes.
-
-**Advantages:**
-- No continuously running Ansible agent required.
-- Easier deployment and maintenance.
-- Reduced agent-management overhead.
-
-Note: Many Linux modules require Python on the managed node.
-
-### 2.2 Idempotency
-
-Idempotency means executing the same automation multiple times should maintain the desired state without making unnecessary changes.
-
-Example:
-
-```yaml
-- name: Install Nginx
-  ansible.builtin.apt:
-    name: nginx
-    state: present
-```
-
-- First execution: Installs Nginx.
-- Second execution: Detects that Nginx is already installed.
-- Further executions: No unnecessary installation.
-
-This helps maintain consistent configurations.
-
-### 2.3 Declarative Approach
-
-Ansible describes what the final configuration should look like rather than requiring us to specify every command.
-
-Example:
-
-```yaml
-- name: Ensure Apache is installed
-  ansible.builtin.apt:
-    name: apache2
-    state: present
-```
-
-We specify the desired state, and Ansible determines whether changes are required.
-
-### 2.4 Extensibility
-
-Ansible supports:
-- Built-in modules.
-- Custom modules.
-- Plugins.
-- Collections.
-
-These allow Ansible to support different infrastructure environments and automation requirements.
-
----
-
-## 3. Ansible Architecture
-
-Ansible architecture consists of three primary components:
-
-1. Control Node
-2. Inventory
-3. Managed Nodes
-
-### Architecture Diagram
+### 2.1 Architecture Diagram
 
 ```text
-                  CONTROL NODE
-                (Ansible Installed)
-                         |
-                 Inventory + Playbook
-                         |
-                  Connection Method
-                    (SSH / WinRM)
-                         |
-             +-----------+-----------+
-             |           |           |
-          Node 1       Node 2      Node 3
-          Web          App         Database
-          Server       Server      Server
+                   Ansible Control Node
+                     (Main Server)
+                           |
+                    SSH Communication
+                           |
+                     Inventory File
+                           |
+                    Ansible Playbooks
+                           |
+             +-------------+-------------+
+             |             |             |
+          Dev Server 1  Dev Server 2  Test Server 1
+                                         |
+                                      Test Server 2
 ```
+
+### 2.2 Main Components
+
+**Control Node**
+
+The machine where Ansible is installed and commands are executed.
+
+**Managed Nodes**
+
+The remote servers controlled by Ansible.
+
+**Inventory File**
+
+Contains the IP addresses, hostnames and groups of managed nodes.
+
+**Playbooks**
+
+YAML files that define automation tasks.
+
+**Modules**
+
+Components that perform operations on managed nodes.
+
+Examples:
+
+- Package management
+- File management
+- User management
+- Service management
+- Command execution
+
+**Plugins**
+
+Extend Ansible functionality, including connection handling, inventory processing and output processing.
+
+### 2.3 How Ansible Works
+
+The general execution flow is:
+
+1. An administrator executes an Ansible command on the control node.
+2. Ansible reads the inventory to identify the target servers.
+3. Ansible establishes SSH connections to the managed nodes.
+4. Ansible transfers and executes the required module code.
+5. Managed nodes perform the requested operation.
+6. Ansible collects and displays the results.
+
+---
+
+## 3. Control Node and Managed Nodes
 
 ### 3.1 Control Node
 
-The Control Node is the machine where Ansible is installed and from which automation commands are executed.
+The control node is the central machine used to manage remote systems.
 
-Examples:
-- Linux workstation.
-- Linux server.
-- AWS EC2 instance.
-- Azure Virtual Machine.
-- Windows machine using WSL.
+Responsibilities:
 
-Common commands:
-
-```bash
-ansible --version
-
-ansible-inventory --list
-
-ansible all -m ansible.builtin.ping
-
-ansible-playbook -i inventory.ini site.yml
-```
+- Installing Ansible.
+- Maintaining inventory files.
+- Maintaining playbooks.
+- Managing SSH private keys.
+- Executing Ansible commands.
+- Collecting execution results.
 
 ### 3.2 Managed Nodes
 
-Managed Nodes are the remote machines that Ansible manages.
+Managed nodes are the remote servers controlled by Ansible.
 
-Examples:
-- AWS EC2 instances.
-- Azure Virtual Machines.
-- Linux servers.
-- Windows servers.
-- Network devices.
+Responsibilities:
 
-Important points:
+- Receiving remote automation tasks.
+- Executing modules.
+- Returning task results.
 
-- Ansible is normally not installed on managed nodes.
-- Linux nodes commonly use SSH.
-- Remote authentication must be configured.
-- Python is required for many Linux/POSIX modules.
+Ansible does not normally need to be installed on managed Linux nodes.
 
-### 3.3 Inventory
+Most standard Linux modules require Python on the managed nodes.
 
-Inventory contains information about the managed nodes.
+### 3.3 Example
 
-It tells Ansible:
-- Which machines are available.
-- Which machines belong to specific groups.
-- How to connect to those machines.
-- Which variables apply to hosts or groups.
+Consider the following infrastructure:
 
-There are two main inventory approaches.
+| Server | Role |
+|---|---|
+| Main Server | Ansible Control Node |
+| Dev Server 1 | Development |
+| Dev Server 2 | Development |
+| Test Server 1 | Testing |
+| Test Server 2 | Testing |
 
-**A. Static Inventory**
-
-A manually maintained list of managed nodes.
-
-Example: `inventory.ini`
-
-```ini
-[webservers]
-web1 ansible_host=192.0.2.10
-web2 ansible_host=192.0.2.11
-
-[appservers]
-app1 ansible_host=192.0.2.20
-```
-
-Explanation:
-
-- `[webservers]` – Group name.
-- `web1`, `web2` – Inventory hostnames.
-- `ansible_host` – Actual IP address.
-
-**B. Dynamic Inventory**
-
-Dynamic inventory automatically retrieves host information from external sources.
-
-Example:
-- AWS EC2 instances.
-- Azure Virtual Machines.
-- Other supported infrastructure platforms.
-
-Dynamic inventory is useful when infrastructure changes frequently.
-
-Ansible supports inventory plugins, which are generally preferred when a suitable plugin is available.
-
-Verify inventory:
-
-```bash
-ansible-inventory -i inventory.ini --list
-```
-
-List hosts:
-
-```bash
-ansible webservers -i inventory.ini --list-hosts
-```
+The main server controls all four managed servers.
 
 ---
 
-## 4. Ansible Modules
+## 4. SSH Communication
 
-Modules are individual units of work used by Ansible to perform specific operations.
+SSH stands for Secure Shell.
 
-Examples:
+It is a network protocol used to securely access remote machines.
 
-| Module | Purpose |
-|---|---|
-| `ansible.builtin.apt` | Install packages on Ubuntu/Debian |
-| `ansible.builtin.dnf` | Manage packages using DNF |
-| `ansible.builtin.service` | Manage services |
-| `ansible.builtin.copy` | Copy files |
-| `ansible.builtin.user` | Manage users |
-| `ansible.builtin.file` | Manage files and directories |
-| `ansible.builtin.ping` | Test Ansible connectivity |
+Ansible normally uses SSH to communicate with Linux managed nodes.
 
-### Types of Modules
+### 4.1 Why SSH Is Required
 
-**Built-in Modules**
+Suppose Ansible is installed on one server and needs to install Git on another server.
 
-Modules provided by Ansible's built-in collection.
+Ansible must establish a remote connection to execute the installation command.
 
-**Collection Modules**
+SSH provides this connection.
 
-Modules provided by additional collections.
+### 4.2 SSH Connection Example
 
-**Custom Modules**
-
-Modules developed for specific organizational requirements.
-
-### Example
-
-```yaml
-- name: Install Apache
-  ansible.builtin.apt:
-    name: apache2
-    state: present
+```bash
+ssh root@192.168.1.10
 ```
 
 Here:
-- `apt` is the module.
-- `name` specifies the package.
-- `state: present` ensures the package is installed.
 
----
+- `ssh` is the SSH client command.
+- `root` is the remote username.
+- `192.168.1.10` is the remote server IP address.
 
-## 5. Ansible Playbooks
+### 4.3 SSH Authentication Methods
 
-A Playbook is a YAML file containing automation instructions.
+SSH supports different authentication methods, including:
 
-It defines:
-- Which hosts to target.
-- Which tasks to execute.
-- Which modules to use.
-- What configuration should be achieved.
+- Password authentication.
+- Public-key authentication.
 
-### Playbook Structure
+For automated Ansible communication, SSH key-based authentication is commonly used.
+
+### 4.4 Important SSH Configuration
+
+The SSH server configuration is normally located at:
 
 ```text
-Playbook
-   |
-   +---- Play
-           |
-           +---- Tasks
-                   |
-                   +---- Module
-                   |
-                   +---- Module
-                   |
-                   +---- Module
+/etc/ssh/sshd_config
 ```
 
-### Example
+For this root-based lab, check:
 
-Create `webserver.yml`:
-
-```yaml
----
-- name: Configure Web Server
-  hosts: webservers
-  become: true
-
-  tasks:
-    - name: Install Apache
-      ansible.builtin.apt:
-        name: apache2
-        state: present
-
-    - name: Start Apache
-      ansible.builtin.service:
-        name: apache2
-        state: started
-        enabled: true
+```text
+PermitRootLogin yes
+PubkeyAuthentication yes
 ```
 
-Execute:
+`PermitRootLogin` controls root SSH access.
 
-```bash
-ansible-playbook -i inventory.ini webserver.yml
-```
+`PubkeyAuthentication` controls public-key authentication.
 
-Explanation:
-
-| Keyword | Meaning |
-|---|---|
-| `name` | Description of the play or task |
-| `hosts` | Target managed nodes |
-| `become` | Privilege escalation |
-| `tasks` | List of automation operations |
-| `apt` | Package management module |
-| `service` | Service management module |
-| `state: present` | Ensure package is installed |
-| `state: started` | Ensure service is running |
-| `enabled: true` | Enable service at boot |
+Changing these settings does not automatically install a public key. The key must also be configured correctly.
 
 ---
 
-## 6. Ansible Plugins
+## 5. Playbooks and Inventory
 
-Plugins extend or customize Ansible functionality.
+Ansible uses inventory files and playbooks to organize automation.
 
-Common plugin types:
+### 5.1 Inventory
 
-| Plugin | Purpose |
-|---|---|
-| Connection Plugin | Establish connections to managed nodes |
-| Callback Plugin | Customize execution output |
-| Inventory Plugin | Load inventory information |
-| Lookup Plugin | Retrieve external or local data |
-| Filter Plugin | Transform data |
-| Become Plugin | Support privilege escalation |
+An inventory file defines the servers Ansible manages.
 
-### Difference Between Modules and Plugins
+It can contain:
 
-| Modules | Plugins |
-|---|---|
-| Perform automation tasks | Extend Ansible functionality |
-| Install packages | Customize connections |
-| Manage services | Customize output |
-| Copy files | Retrieve and transform data |
+- Server IP addresses.
+- Hostnames.
+- Connection usernames.
+- Host groups.
+- Connection variables.
 
----
-
-## 7. How Ansible Works
-
-Ansible generally follows this execution process:
-
-**Step 1: Inventory Preparation**
-
-Define the managed nodes and organize them into groups.
-
-**Step 2: Playbook Creation**
-
-Write automation instructions in YAML.
-
-**Step 3: Execute Playbook**
-
-Run the playbook from the control node.
-
-**Step 4: Host Selection**
-
-Ansible identifies the target hosts using the inventory and `hosts` pattern.
-
-**Step 5: Establish Connection**
-
-Ansible connects to the managed nodes using SSH or another supported connection method.
-
-**Step 6: Gather Facts**
-
-Ansible collects system information, such as:
-- Operating system.
-- IP addresses.
-- Hostname.
-- Memory.
-- Processor information.
-
-**Step 7: Execute Modules**
-
-Ansible executes the required modules to perform automation tasks.
-
-**Step 8: Return Results**
-
-Ansible displays execution results.
-
-Common statuses:
-
-| Status | Meaning |
-|---|---|
-| `ok` | No changes required |
-| `changed` | System configuration changed |
-| `failed` | Task failed |
-| `unreachable` | Cannot communicate with host |
-| `skipped` | Task skipped |
-
----
-
-## 8. Practical Example – Apache Installation
-
-Let's automate Apache installation on Ubuntu managed nodes.
-
-### Step 1: Create Inventory
-
-`inventory.ini`
+Example:
 
 ```ini
-[webservers]
-web1 ansible_host=192.0.2.10 ansible_user=ansible
-web2 ansible_host=192.0.2.11 ansible_user=ansible
+[dev]
+192.168.1.10
+192.168.1.11
+
+[test]
+192.168.1.20
+192.168.1.21
 ```
 
-### Step 2: Test Connectivity
+Here:
 
-```bash
-ansible webservers -i inventory.ini -m ansible.builtin.ping
-```
+- `[dev]` represents development servers.
+- `[test]` represents testing servers.
 
-Successful response:
+### 5.2 Playbooks
 
-```json
-{
-    "changed": false,
-    "ping": "pong"
-}
-```
+A playbook is a YAML file that defines one or more plays and tasks.
 
-The Ansible ping module checks Ansible connectivity and module execution. It is not the same as the operating system's ICMP ping command.
+Playbooks are used to describe automation in a structured and reusable way.
 
-### Step 3: Create Playbook
-
-`apache.yml`
+Example:
 
 ```yaml
 ---
-- name: Install and configure Apache
-  hosts: webservers
-  become: true
-  gather_facts: true
-
+- name: Install Git on development servers
+  hosts: dev
   tasks:
-
-    - name: Install Apache
-      ansible.builtin.apt:
-        name: apache2
+    - name: Install Git
+      ansible.builtin.package:
+        name: git
         state: present
-        update_cache: true
-
-    - name: Start Apache
-      ansible.builtin.service:
-        name: apache2
-        state: started
-        enabled: true
-
-    - name: Create custom webpage
-      ansible.builtin.copy:
-        dest: /var/www/html/index.html
-        content: |
-          <h1>Welcome to Ansible Automation!</h1>
-        owner: root
-        group: root
-        mode: "0644"
 ```
 
-### Step 4: Validate Syntax
+This playbook ensures Git is installed on all hosts belonging to the `dev` group.
 
-```bash
-ansible-playbook -i inventory.ini apache.yml --syntax-check
-```
+### 5.3 Inventory vs Playbook
 
-### Step 5: Preview Changes
-
-```bash
-ansible-playbook -i inventory.ini apache.yml --check --diff
-```
-
-### Step 6: Execute Playbook
-
-```bash
-ansible-playbook -i inventory.ini apache.yml
-```
-
-If sudo requires a password:
-
-```bash
-ansible-playbook -i inventory.ini apache.yml --ask-become-pass
-```
-
-### Step 7: Verify Apache
-
-Check service:
-
-```bash
-sudo systemctl status apache2
-```
-
-Check webpage:
-
-```bash
-curl http://localhost
-```
-
-The webpage can also be accessed remotely if the network, firewall, and cloud security rules permit HTTP traffic.
+| Inventory | Playbook |
+|---|---|
+| Defines managed servers | Defines automation tasks |
+| Contains host groups | Contains plays and tasks |
+| Identifies where tasks run | Describes what tasks should happen |
 
 ---
 
-## 9. Ubuntu vs Amazon Linux
+# 6. Five-Server AWS Lab Setup
 
-The package manager and Apache package name differ between operating systems.
+For the practical lab, five AWS EC2 instances are used.
 
-| Configuration | Ubuntu | Amazon Linux |
+The objective is to configure one Ansible control node and four managed nodes.
+
+### 6.1 Lab Infrastructure
+
+| Instance | Role | Operating system |
 |---|---|---|
-| Package Manager | APT | DNF (current Amazon Linux releases) |
-| Apache Package | apache2 | httpd |
-| Service Name | apache2 | httpd |
-| Web Root | /var/www/html | /var/www/html |
+| Main Server | Ansible Control Node | Amazon Linux or Ubuntu |
+| Dev Server 1 | Managed Node | Linux |
+| Dev Server 2 | Managed Node | Linux |
+| Test Server 1 | Managed Node | Linux |
+| Test Server 2 | Managed Node | Linux |
 
-Amazon Linux example:
-
-```yaml
-- name: Install Apache
-  ansible.builtin.dnf:
-    name: httpd
-    state: present
-
-- name: Start Apache
-  ansible.builtin.service:
-    name: httpd
-    state: started
-    enabled: true
-```
-
-Always identify the operating system before choosing the appropriate package-management module.
-
----
-
-## 10. Ansible in DevOps and Multi-Cloud
-
-Ansible can be integrated into a CI/CD workflow.
-
-Example workflow:
+### 6.2 Architecture
 
 ```text
-Developer
-    |
-    v
-Git Repository
-    |
-    v
-Jenkins Pipeline
-    |
-    v
-Build and Test
-    |
-    v
-Ansible Automation
-    |
-    v
-Deployment Servers
-    |
-    v
-Application Running
+                     AWS EC2 Environment
+
+                       Main Server
+                    Ansible Control Node
+                            |
+                      SSH Connections
+                            |
+             +--------------+--------------+
+             |              |              |
+         Dev Server 1   Dev Server 2   Test Server 1
+                                           |
+                                       Test Server 2
 ```
 
-### Real-world scenario
+### 6.3 AWS Instance Preparation
 
-Suppose an organization operates applications on AWS and Azure.
+Launch five EC2 instances.
 
-Ansible can help:
-- Configure Linux virtual machines.
-- Install application dependencies.
-- Deploy application artifacts.
-- Configure Nginx or Apache.
-- Manage services.
-- Maintain consistent configurations.
+For each instance:
 
-This makes Ansible useful in multi-cloud environments.
+1. Select an appropriate Linux AMI.
+2. Select the required instance type.
+3. Configure networking and security groups.
+4. Select or create an SSH key pair.
+5. Launch the instance.
+6. Note its private IP address.
+
+### 6.4 Security Group Requirements
+
+The control node must communicate with managed nodes over SSH.
+
+| Instance | Inbound rule | Source |
+|---|---|---|
+| Main Server | SSH TCP 22 | Trusted administrator IP |
+| Managed Nodes | SSH TCP 22 | Main Server security group |
+
+Use private IP addresses when instances communicate inside the same VPC.
+
+### 6.5 Important AWS Networking Concepts
+
+- A security group controls inbound and outbound traffic.
+- Private IP addresses are used for communication within private networks.
+- Public IP addresses can be used for external access when networking permits.
+- SSH requires TCP port 22 to be reachable.
+- Route tables and network ACLs must also permit communication.
 
 ---
 
-## 11. Troubleshooting
+# 7. Hostname Configuration
 
-| Problem | Possible Solution |
+A hostname identifies a machine on a network.
+
+For the lab, meaningful hostnames help distinguish the control node, development servers and testing servers.
+
+### 7.1 Switch to Root
+
+```bash
+sudo -i
+```
+
+This opens a root shell.
+
+### 7.2 Configure the Main Server Hostname
+
+```bash
+hostnamectl set-hostname ansible-main
+```
+
+### 7.3 Configure Development Server Hostnames
+
+On Development Server 1:
+
+```bash
+hostnamectl set-hostname dev1
+```
+
+On Development Server 2:
+
+```bash
+hostnamectl set-hostname dev2
+```
+
+### 7.4 Configure Testing Server Hostnames
+
+On Testing Server 1:
+
+```bash
+hostnamectl set-hostname test1
+```
+
+On Testing Server 2:
+
+```bash
+hostnamectl set-hostname test2
+```
+
+### 7.5 Verify the Hostname
+
+```bash
+hostname
+```
+
+Or:
+
+```bash
+hostnamectl
+```
+
+### 7.6 Why Configure Hostnames?
+
+Meaningful hostnames make it easier to identify servers.
+
+For example, instead of remembering multiple IP addresses, administrators can recognize machines by names such as:
+
+- ansible-main
+- dev1
+- dev2
+- test1
+- test2
+
+---
+
+# 8. SSH Key Authentication
+
+SSH key-based authentication allows the control node to connect to managed nodes without repeatedly entering account passwords.
+
+### 8.1 Generate an SSH Key Pair
+
+Execute on the control node:
+
+```bash
+ssh-keygen -t ed25519
+```
+
+Press Enter to accept the default location.
+
+The command generates two files:
+
+```text
+~/.ssh/id_ed25519
+~/.ssh/id_ed25519.pub
+```
+
+| File | Purpose |
 |---|---|
-| SSH connection failure | Verify SSH connectivity, username, and key |
-| Permission denied | Check SSH authentication and sudo permissions |
-| Python interpreter error | Install Python or configure the interpreter path |
-| Package installation failure | Verify package manager and package name |
-| YAML syntax error | Check indentation and formatting |
-| Host unreachable | Check IP address, routing, and firewall |
-| Apache not accessible | Check service, port 80, firewall, and security group |
+| id_ed25519 | Private key |
+| id_ed25519.pub | Public key |
 
-Useful commands:
+The private key must remain protected on the control node.
+
+### 8.2 Prepare the Root SSH Directory
+
+On each managed node:
+
+```bash
+mkdir -p /root/.ssh
+chmod 700 /root/.ssh
+```
+
+### 8.3 Copy the Public Key
+
+If initial root authentication is available:
+
+```bash
+ssh-copy-id -i ~/.ssh/id_ed25519.pub root@<MANAGED_NODE_PRIVATE_IP>
+```
+
+Repeat for all managed nodes.
+
+This adds the public key to:
+
+```text
+/root/.ssh/authorized_keys
+```
+
+### 8.4 Configure Permissions
+
+On managed nodes:
+
+```bash
+chmod 600 /root/.ssh/authorized_keys
+chown -R root:root /root/.ssh
+```
+
+### 8.5 Test SSH Connection
+
+```bash
+ssh root@<MANAGED_NODE_PRIVATE_IP>
+```
+
+If the connection succeeds using the configured key, SSH key authentication is working.
+
+### 8.6 SSH Configuration for Root
+
+On Ubuntu, edit:
+
+```bash
+nano /etc/ssh/sshd_config
+```
+
+On Amazon Linux, edit the same configuration file.
+
+Check:
+
+```text
+PermitRootLogin yes
+PubkeyAuthentication yes
+```
+
+Restart the SSH service.
+
+Ubuntu:
+
+```bash
+systemctl restart ssh
+```
+
+Amazon Linux:
+
+```bash
+systemctl restart sshd
+```
+
+**Security note:** Root SSH access is used here for the requested lab. In production, a dedicated automation account with controlled privilege escalation is generally preferred.
+
+---
+
+# 9. Ansible Installation
+
+Ansible must be installed on the main/control node.
+
+The installation process differs depending on the Linux distribution.
+
+## 9.1 Ubuntu 22.04, 24.04 and 26.04
+
+### Step 1: Update the system
+
+```bash
+sudo apt update
+sudo apt upgrade -y
+```
+
+### Step 2: Install dependencies
+
+```bash
+sudo apt install -y software-properties-common \
+    python3 \
+    python3-pip \
+    python3-venv \
+    openssh-client \
+    git
+```
+
+### Step 3: Add the Ansible PPA
+
+```bash
+sudo add-apt-repository --yes --update ppa:ansible/ansible
+```
+
+### Step 4: Install Ansible
+
+```bash
+sudo apt install -y ansible
+```
+
+### Step 5: Verify installation
 
 ```bash
 ansible --version
+python3 --version
+```
 
-ansible-inventory -i inventory.ini --list
+The same general procedure applies to all three Ubuntu versions, provided the Ansible PPA supports the selected release.
 
-ansible webservers -i inventory.ini --list-hosts
+## 9.2 Amazon Linux 2023
 
-ansible webservers -i inventory.ini -m ansible.builtin.ping
+Amazon Linux 2023 uses DNF.
 
-ansible-playbook -i inventory.ini apache.yml --syntax-check
+The older Amazon Linux Extras method is not available on Amazon Linux 2023.
+
+### Step 1: Update the system
+
+```bash
+sudo dnf update -y
+```
+
+### Step 2: Install Python and required packages
+
+```bash
+sudo dnf install -y python3.13 python3.13-pip \
+    git openssh-clients
+```
+
+Check Python:
+
+```bash
+python3.13 --version
+```
+
+If the packages are unavailable:
+
+```bash
+dnf search python3
+```
+
+Select an available supported Python version and adjust the commands accordingly.
+
+### Step 3: Create a virtual environment
+
+```bash
+python3.13 -m venv ~/ansible-venv
+```
+
+### Step 4: Activate the environment
+
+```bash
+source ~/ansible-venv/bin/activate
+```
+
+### Step 5: Upgrade pip
+
+```bash
+python -m pip install --upgrade pip
+```
+
+### Step 6: Install Ansible
+
+```bash
+python -m pip install ansible
+```
+
+### Step 7: Verify installation
+
+```bash
+ansible --version
+python --version
+```
+
+Whenever a new terminal session is opened:
+
+```bash
+source ~/ansible-venv/bin/activate
+```
+
+### 9.3 Installation Comparison
+
+| Item | Ubuntu | Amazon Linux 2023 |
+|---|---|---|
+| Package manager | APT | DNF |
+| Python | python3 | Versioned Python executable |
+| Ansible installation | APT and PPA | pip in virtual environment |
+| SSH client package | openssh-client | openssh-clients |
+| Extras repository | Not applicable | Not available |
+
+---
+
+# 10. Inventory Configuration
+
+Ansible uses an inventory file to identify managed servers.
+
+The default inventory location is:
+
+```text
+/etc/ansible/hosts
+```
+
+A custom inventory file can also be created and supplied using the `-i` option.
+
+### 10.1 Create the Inventory Directory
+
+For a custom lab:
+
+```bash
+mkdir -p ~/ansible-lab
+cd ~/ansible-lab
+```
+
+### 10.2 Create the Inventory File
+
+```bash
+nano inventory.ini
+```
+
+### 10.3 Configure Development and Testing Groups
+
+```ini
+[dev]
+dev1 ansible_host=10.0.1.10 ansible_user=root
+dev2 ansible_host=10.0.1.11 ansible_user=root
+
+[test]
+test1 ansible_host=10.0.1.20 ansible_user=root
+test2 ansible_host=10.0.1.21 ansible_user=root
+
+[all:vars]
+ansible_ssh_private_key_file=~/.ssh/id_ed25519
+```
+
+Replace the sample IP addresses with the actual private IP addresses of the EC2 instances.
+
+### 10.4 Understanding Inventory Groups
+
+**[dev]**
+
+Contains development servers.
+
+**[test]**
+
+Contains testing servers.
+
+**ansible_host**
+
+Specifies the actual IP address of a managed server.
+
+**ansible_user=root**
+
+Specifies the SSH user.
+
+**ansible_ssh_private_key_file**
+
+Specifies the private key used for authentication.
+
+### 10.5 Verify Inventory
+
+List all managed nodes:
+
+```bash
+ansible all -i inventory.ini --list-hosts
+```
+
+List development nodes:
+
+```bash
+ansible dev -i inventory.ini --list-hosts
+```
+
+List testing nodes:
+
+```bash
+ansible test -i inventory.ini --list-hosts
 ```
 
 ---
 
-## 12. Interview Questions
+# 11. Ad Hoc Commands
 
-**1. What is Ansible?**
+Ansible ad hoc commands are used to execute individual tasks without creating a playbook.
 
-Ansible is an open-source automation tool used for configuration management, application deployment, orchestration, and infrastructure automation.
+They are useful for quick operations and initial testing.
 
-**2. What is an agentless architecture?**
+### 11.1 Basic Syntax
 
-Ansible generally does not require a continuously running agent on managed nodes. It commonly uses SSH to communicate with Linux systems.
+```bash
+ansible <host-pattern> -i <inventory-file> -m <module> -a "<arguments>"
+```
 
-**3. What is a Control Node?**
+Where:
 
-The machine where Ansible is installed and automation is executed.
+- `ansible`: Executes the Ansible command.
+- `host-pattern`: Identifies the target hosts.
+- `-i`: Specifies the inventory.
+- `-m`: Specifies the module.
+- `-a`: Provides module arguments.
 
-**4. What are Managed Nodes?**
+### 11.2 Install Git on All Servers
 
-The remote systems controlled by Ansible.
+Original command style:
 
-**5. What is Inventory?**
+```bash
+ansible all -i inventory.ini -a "yum install git -y"
+```
 
-Inventory defines the managed hosts and groups that Ansible can target.
+Module-based approach:
 
-**6. What is the difference between static and dynamic inventory?**
+```bash
+ansible all -i inventory.ini -m ansible.builtin.package -a "name=git state=present"
+```
 
-Static inventory is manually maintained, while dynamic inventory retrieves host information from external sources.
+### 11.3 Install Maven on Development Servers
 
-**7. What is a Module?**
+```bash
+ansible dev -i inventory.ini -m ansible.builtin.package -a "name=maven state=present"
+```
 
-A module is a unit of work used to perform an automation operation.
+### 11.4 Create a File on All Servers
 
-**8. What is a Playbook?**
+```bash
+ansible all -i inventory.ini -m ansible.builtin.file -a "path=/tmp/file1 state=touch"
+```
 
-A YAML file that defines automation plays and tasks.
+### 11.5 List Files
 
-**9. What is Idempotency?**
+```bash
+ansible all -i inventory.ini -m ansible.builtin.command -a "ls /tmp"
+```
 
-Repeated execution maintains the desired state without unnecessary changes.
+### 11.6 Install Apache
 
-**10. What is the difference between Modules and Plugins?**
+```bash
+ansible all -i inventory.ini -m ansible.builtin.package -a "name=httpd state=present"
+```
 
-Modules perform automation tasks, whereas plugins extend or customize Ansible functionality.
+**Note:** The package name differs across distributions. On Ubuntu, Apache is normally packaged as `apache2`; on Amazon Linux, it is `httpd`.
 
-**11. What is privilege escalation?**
+For a mixed Ubuntu and Amazon Linux inventory, target the appropriate groups separately.
 
-Privilege escalation allows Ansible to execute tasks with elevated permissions, commonly using sudo through `become: true`.
+Ubuntu:
 
-**12. Does Ansible require Python on managed nodes?**
+```bash
+ansible ubuntu -i inventory.ini -m ansible.builtin.package -a "name=apache2 state=present"
+```
 
-Many POSIX modules require Python. Requirements vary by platform and module.
+Amazon Linux:
+
+```bash
+ansible amazon -i inventory.ini -m ansible.builtin.package -a "name=httpd state=present"
+```
+
+### 11.7 Start Apache on Amazon Linux
+
+```bash
+ansible amazon -i inventory.ini -m ansible.builtin.service -a "name=httpd state=started enabled=true"
+```
+
+For Ubuntu:
+
+```bash
+ansible ubuntu -i inventory.ini -m ansible.builtin.service -a "name=apache2 state=started enabled=true"
+```
+
+### 11.8 Create a User
+
+```bash
+ansible all -i inventory.ini -m ansible.builtin.user -a "name=raham state=present"
+```
+
+### 11.9 Check User Information
+
+```bash
+ansible all -i inventory.ini -m ansible.builtin.command -a "cat /etc/passwd"
+```
+
+Because the lab uses root SSH access, the commands execute with root permissions.
+
+**Important:** The original commands using `yum`, `httpd` and `systemctl` reflect the Amazon Linux environment. The module-based commands are more portable, but package names can still differ between operating systems.
 
 ---
 
-## 13. Technical Verification – Original Concepts vs Current Practices
+# 12. Host Selection and Inventory Patterns
 
-| Concept | Current understanding | Classification |
+Ansible supports host patterns to select individual servers or groups of servers.
+
+Host patterns allow administrators to control where automation tasks execute.
+
+### 12.1 Select All Hosts
+
+```bash
+ansible all -i inventory.ini --list-hosts
+```
+
+Selects all hosts in the inventory.
+
+### 12.2 Select Development Hosts
+
+```bash
+ansible dev -i inventory.ini --list-hosts
+```
+
+Selects only development servers.
+
+### 12.3 Select Testing Hosts
+
+```bash
+ansible test -i inventory.ini --list-hosts
+```
+
+Selects only testing servers.
+
+### 12.4 Select the First Host
+
+```bash
+ansible "test[0]" -i inventory.ini --list-hosts
+```
+
+Selects the first host in the `test` group.
+
+Host indices are zero-based.
+
+### 12.5 Select the Last Host
+
+```bash
+ansible "all[-1]" -i inventory.ini --list-hosts
+```
+
+Selects the last host in the inventory ordering.
+
+### 12.6 Important Host Patterns
+
+| Pattern | Meaning |
+|---|---|
+| all | All hosts |
+| dev | Hosts in the dev group |
+| test | Hosts in the test group |
+| test[0] | First host in the test group |
+| all[-1] | Last host in inventory ordering |
+
+These are inventory host-selection patterns, not IP address range definitions.
+
+---
+
+# 13. Bash History Timestamps
+
+Bash maintains a history of previously executed commands.
+
+By default, the history output may not display the date and time at which commands were executed.
+
+The `HISTTIMEFORMAT` environment variable can be used to display timestamps.
+
+### 13.1 Enable Timestamps
+
+```bash
+export HISTTIMEFORMAT="%F %T "
+```
+
+### 13.2 Display Command History
+
+```bash
+history
+```
+
+Example:
+
+```text
+1  2026-11-15 10:20:15 sudo apt update
+2  2026-11-15 10:25:30 ansible --version
+3  2026-11-15 10:30:10 ssh root@10.0.1.10
+```
+
+The exact dates and times depend on the command execution history.
+
+### 13.3 Understand the Format
+
+| Format | Meaning |
+|---|---|
+| `%F` | Date in YYYY-MM-DD format |
+| `%T` | Time in HH:MM:SS format |
+
+### 13.4 Make Timestamp Configuration Permanent
+
+To keep timestamps enabled in future Bash sessions, add the setting to `~/.bashrc`.
+
+```bash
+echo 'export HISTTIMEFORMAT="%F %T "' >> ~/.bashrc
+source ~/.bashrc
+```
+
+This is a Bash shell feature and is not specific to Ansible.
+
+---
+
+# 14. Troubleshooting
+
+| Problem | Possible reason | Solution |
 |---|---|---|
-| Agentless architecture | Still valid; managed-node prerequisites remain | Still Valid |
-| Control Node | Supported Linux/UNIX-like environment; Windows users can use WSL | Clarification |
-| Inventory location | `/etc/ansible/hosts` is a common default, not mandatory | Clarification |
-| Dynamic inventory scripts | Inventory plugins are supported and preferred when available | Alternative Approach |
-| Module naming | Prefer FQCN such as `ansible.builtin.apt` | Alternative Approach |
-| Module execution | Execution details depend on the module and connection mechanism | Clarification |
-| Fact gathering | Enabled by default in normal plays, unless disabled | Still Valid |
-| Boolean values | Prefer `true` and `false` in YAML examples | Alternative Approach |
-| Apache installation | Ubuntu uses `apache2`; Amazon Linux uses `httpd` | Clarification |
+| Ansible command not found | Ansible is not installed or virtual environment is inactive | Verify installation and activate the environment |
+| Permission denied (publickey) | Incorrect key or SSH configuration | Check private key, public key and root SSH access |
+| UNREACHABLE | Network or SSH connectivity problem | Check private IP, security groups and routes |
+| Connection refused | SSH service is not running | Check and restart SSH |
+| Python interpreter not found | Python is missing on managed node | Install a supported Python version |
+| Root login rejected | Root login policy blocks access | Inspect effective SSH configuration |
+| PPA installation error | Repository does not support selected Ubuntu release | Verify repository support |
+| Package not found | Package name differs by distribution | Use the correct package name for the operating system |
 
-### Important Technical Notes
+### Useful Troubleshooting Commands
 
-- Ansible's normal push-based architecture is agentless.
-- Dynamic inventory is not restricted to scripts.
-- FQCNs make module references explicit.
-- Check mode does not guarantee accurate previews for every module.
-- Ansible can manage infrastructure after provisioning; it can also provision supported cloud resources through collections and APIs.
+Check SSH status on Ubuntu:
+
+```bash
+sudo systemctl status ssh
+```
+
+Check SSH status on Amazon Linux:
+
+```bash
+sudo systemctl status sshd
+```
+
+Validate SSH configuration:
+
+```bash
+sudo sshd -t
+```
+
+Check effective SSH settings:
+
+```bash
+sudo sshd -T | grep -E 'permitrootlogin|pubkeyauthentication'
+```
+
+Test SSH with debugging:
+
+```bash
+ssh -vvv root@<MANAGED_NODE_PRIVATE_IP>
+```
+
+Check Ansible inventory:
+
+```bash
+ansible-inventory -i inventory.ini --list
+```
 
 ---
 
-## 14. Official Documentation
+# 15. Important Learning Points
 
-- [Ansible Getting Started](https://docs.ansible.com/projects/ansible/latest/getting_started/index.html)
-- [Ansible Basic Concepts](https://docs.ansible.com/projects/ansible/latest/getting_started/basic_concepts.html)
-- [Ansible Installation Guide](https://docs.ansible.com/projects/ansible/latest/installation_guide/intro_installation.html)
-- [Ansible Inventory](https://docs.ansible.com/projects/ansible/latest/getting_started/get_started_inventory.html)
-- [Ansible Playbooks](https://docs.ansible.com/projects/ansible/latest/getting_started/get_started_playbook.html)
-- [Ansible APT Module](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/apt_module.html)
-- [Ansible Service Module](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/service_module.html)
+1. Ansible is an automation and configuration management tool.
+2. Ansible was created by Michael DeHaan.
+3. Ansible follows a control-node and managed-node architecture.
+4. SSH is the normal connection method for Linux managed nodes.
+5. Ansible is agentless for its standard SSH-based Linux management.
+6. Inventory files define managed hosts and groups.
+7. Playbooks are YAML files containing automation tasks.
+8. Modules perform operations on managed nodes.
+9. Python is required for the Ansible runtime and most standard Linux modules.
+10. SSH key authentication supports automated remote connections.
+11. Ad hoc commands are useful for executing individual tasks.
+12. Host patterns allow selective execution against inventory groups and hosts.
+13. Ubuntu uses APT, while Amazon Linux 2023 uses DNF.
+14. Package names may differ between Linux distributions.
+15. Root SSH access is possible for a lab, but a restricted automation account is preferable in production.
 
 ---
 
-## 15. Key Takeaways
+# 16. Interview Questions
 
-1. Ansible automates repetitive infrastructure tasks.
-2. Control Node runs Ansible; Managed Nodes are the target systems.
-3. Inventory defines the managed infrastructure.
-4. Modules perform individual automation operations.
-5. Playbooks define automation workflows using YAML.
-6. Plugins extend Ansible functionality.
-7. Idempotency helps maintain consistent configurations.
-8. Ansible supports cloud automation and CI/CD integration.
-9. Platform differences must be considered when writing automation.
-10. Ansible is useful for managing infrastructure across AWS, Azure, and on-premises environments.
+### 1. What is Ansible?
 
-**Learning perspective:** Understanding Ansible architecture is the foundation for writing playbooks, managing multiple servers, and integrating infrastructure automation into DevOps workflows.
+Ansible is an open-source automation and configuration management tool used to manage servers, deploy applications and automate repetitive IT tasks.
+
+### 2. What is configuration management?
+
+Configuration management is the process of maintaining and controlling the desired configuration of systems, including packages, users, services and files.
+
+### 3. What is a control node?
+
+A control node is the machine where Ansible is installed and automation commands are executed.
+
+### 4. What are managed nodes?
+
+Managed nodes are the remote machines controlled by Ansible.
+
+### 5. Does Ansible require an agent on managed Linux nodes?
+
+No. Standard SSH-based Linux management is agentless, although managed nodes normally need Python for most standard modules.
+
+### 6. Why does Ansible use SSH?
+
+SSH provides secure remote communication and allows Ansible to execute tasks on managed nodes.
+
+### 7. What is an inventory file?
+
+An inventory file contains information about managed servers, including their IP addresses, groups and connection variables.
+
+### 8. What is a playbook?
+
+A playbook is a YAML file that defines plays and tasks for automating operations on managed nodes.
+
+### 9. What is an ad hoc command?
+
+An ad hoc command executes an individual task without requiring a playbook.
+
+### 10. What is the purpose of Ansible modules?
+
+Modules perform specific operations such as package installation, file management, user creation and service management.
+
+### 11. What is the difference between inventory and playbook?
+
+Inventory identifies the target servers, whereas playbooks define the tasks to execute on those servers.
+
+### 12. Why is Python required?
+
+Ansible uses Python on the control node, and most standard modules require a compatible Python interpreter on managed Linux nodes.
+
+### 13. What is SSH key-based authentication?
+
+It is an authentication method that uses a public/private key pair to establish secure SSH connections.
+
+### 14. What is the purpose of `ansible all --list-hosts`?
+
+It displays the hosts selected by the `all` inventory pattern.
+
+### 15. What is the difference between Ubuntu and Amazon Linux package management?
+
+Ubuntu uses APT, while Amazon Linux 2023 uses DNF.
+
+---
+
+# 17. Practical Lab Completion Sequence
+
+The complete practical workflow can be summarized as follows:
+
+```text
+Introduction to Ansible
+          |
+Configuration Management
+          |
+Ansible Architecture
+          |
+Control and Managed Nodes
+          |
+SSH Communication
+          |
+AWS EC2 Lab Preparation
+          |
+Hostname Configuration
+          |
+Root SSH Configuration
+          |
+SSH Key Authentication
+          |
+Ansible Installation
+          |
+Inventory Configuration
+          |
+Ansible Ad Hoc Commands
+          |
+Host Selection Patterns
+          |
+Bash History Timestamps
+          |
+Connectivity Verification
+```
+
+## Final Practical Verification
+
+Before considering the basic lab setup complete, execute:
+
+```bash
+# Check Ansible version
+ansible --version
+
+# List all managed hosts
+ansible all -i inventory.ini --list-hosts
+
+# Test development servers
+ansible dev -i inventory.ini -m ansible.builtin.ping
+
+# Test testing servers
+ansible test -i inventory.ini -m ansible.builtin.ping
+
+# Test all managed servers
+ansible all -i inventory.ini -m ansible.builtin.ping
+
+# Check remote hostnames
+ansible all -i inventory.ini -m ansible.builtin.command -a "hostname"
+
+# Check remote users
+ansible all -i inventory.ini -m ansible.builtin.command -a "whoami"
+```
+
+A successful response from every managed node confirms that the basic Ansible connection and execution workflow is functioning.
+
+---
+
+## Security Considerations
+
+This learning lab uses root SSH access as requested.
+
+For production environments, use a dedicated automation account with SSH key authentication and controlled privilege escalation. Restrict network access and protect private keys. Avoid exposing root SSH access to public networks.
+
+## Technical References
+
+- Ansible documentation: https://docs.ansible.com/
+- Ansible installation guide: https://docs.ansible.com/ansible/latest/installation_guide/
+- Ansible inventory guide: https://docs.ansible.com/ansible/latest/inventory_guide/
+- Ansible SSH connection guide: https://docs.ansible.com/ansible/latest/inventory_guide/connection_details.html
+- Ubuntu documentation: https://documentation.ubuntu.com/
+- Amazon Linux 2023 documentation: https://docs.aws.amazon.com/linux/al2023/ug/
