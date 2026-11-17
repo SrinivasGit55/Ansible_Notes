@@ -6,7 +6,7 @@ A structured collection of my Ansible learning notes, practical examples, comman
 
 ### Introduction, Architecture and Practical Setup
 
-[Ansible Day 1 Notes Entry](Introduction-to-Ansible.md)
+[Ansible Day 1 Notes Entry](1.Introduction-to-Ansible.md)
 
 Covered topics:
 
