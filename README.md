@@ -53,6 +53,25 @@ Covered topics:
 - Ansible Vault and local connection mode
 - Verified terminology, practical distinctions and current approaches
 
+### Day 4 – Conditions, Handlers, Vault, Roles and Additional Modules
+
+[Read Day 4 Notes](Ansible_Day-4_notes.md)
+
+Covered topics:
+
+- Homogeneous and heterogeneous environments
+- Conditions using `when` and operating system facts
+- Package installation for Ubuntu/Debian using APT and Red Hat-based systems using DNF
+- Generic package module and distribution-specific package names
+- Handlers, `notify` and service restart behavior
+- Ansible Vault commands and protecting environment credentials
+- YAML troubleshooting, YAML Lint and syntax checking
+- Check Mode (dry run) and its limitations
+- Python package management using the PIP module and virtual environments
+- Setup and Debug modules
+- Ansible Roles and reusable role directory structure
+- Ansible Galaxy, roles and collections
+
 ## Learning Approach
 
 These notes are organized by learning day and focus on understanding Ansible concepts through practical scenarios, commands, execution flow and troubleshooting. The examples are intended to build a foundation for automating server configuration and application deployment.
