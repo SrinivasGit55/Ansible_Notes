@@ -8,19 +8,6 @@ A structured collection of my Ansible learning notes, practical examples, comman
 
 [Ansible Day 1 Notes Entry](Introduction-to-Ansible.md)
 
-- Introduction to Ansible
-- Ansible Architecture and Components
-- Control Node and Managed Nodes
-- SSH Communication
-- Playbooks and Inventory
-- Five-Server AWS Lab Setup
-- Hostname Configuration
-- SSH Key Authentication
-
-### Day 1 set-up on both ubuntu and amazon linux
-
-[Read Day 1 Notes](Introduction-to-Ansible.md)
-
 Covered topics:
 
 - Introduction to Ansible and configuration management
