@@ -35,6 +35,24 @@ Covered topics:
 - Tags: selecting, executing and skipping tasks
 - Multiple package installation and important commands
 
+### Day 3 – Command Execution, Variables, Loops and Troubleshooting
+
+[Read Day 3 Notes](Ansible_Day-3_notes.md)
+
+Covered topics:
+
+- Differences between Shell, Command and Raw modules
+- Installing and removing packages with Ansible
+- Using `sed` to modify file content
+- Playbook variables and runtime variables with `--extra-vars`
+- Variable precedence and Jinja2 variable references
+- Loops for package installation and user/group management
+- SSH `known_hosts`, inventory checks and Ansible Ping
+- Gathering CPU and memory facts from managed nodes
+- AWS EC2 instance resizing and vertical scaling
+- Ansible Vault and local connection mode
+- Verified terminology, practical distinctions and current approaches
+
 ## Learning Approach
 
 These notes are organized by learning day and focus on understanding Ansible concepts through practical scenarios, commands, execution flow and troubleshooting. The examples are intended to build a foundation for automating server configuration and application deployment.
