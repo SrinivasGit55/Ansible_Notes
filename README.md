@@ -4,7 +4,20 @@ A structured collection of my Ansible learning notes, practical examples, comman
 
 ## Learning Progress
 
-### Day 1 – Introduction, Architecture and Practical Setup
+### Introduction, Architecture and Practical Setup
+
+[Ansible Day 1 Notes Entry](Introduction-to-Ansible.md)
+
+-ntroduction to Ansible
+-Ansible Architecture and Components
+-Control Node and Managed Nodes
+-SSH Communication
+-Playbooks and Inventory
+-Five-Server AWS Lab Setup
+-Hostname Configuration
+-SSH Key Authentication
+
+### Day 1 set-up on both ubuntu and amazon linux
 
 [Read Day 1 Notes](Introduction-to-Ansible.md)
 
@@ -34,10 +47,6 @@ Covered topics:
 - Task execution order and failure handling
 - Tags: selecting, executing and skipping tasks
 - Multiple package installation and important commands
-
-## Additional Reference
-
-- [Ansible Day 1 Notes Entry](Ansible_Day-1_notes.md) — short Day 1 entry pointing to the detailed introduction and practical setup notes.
 
 ## Learning Approach
 
